@@ -86,12 +86,6 @@ def get_pos_2_3(p_1, xlsx_subfieldcode, xlsx_component, xlsx_subj_code):
                     return num, "5"
 
 
-def df_to_excel(data_frame, file):
-    writer = pd.ExcelWriter(file, engine="xlsxwriter")
-    data_frame.to_excel(writer, index=False)
-    writer.close()
-
-
 # find max 4th value
 def get_max_4(dis_rep):
     list_of_4 = [int(dis_rep["DIS_CODE"].values[d].split("(", 1)[0].split(".")[3]) for d in
