@@ -1,6 +1,9 @@
 import pandas as pd
 import re
+import time
 import sys
+
+start_time = time.time()
 
 degree = {
     "06": "Бакалавр",
@@ -176,3 +179,13 @@ def generate_df_w_unique_code(in_df, sys_df=None):
         code_list.append(in_df.loc[i, "DIS_CODE"])
     out_df["DIS_CODE"] = code_list
     return out_df, sys_df
+
+
+df1 = pd.read_excel("source_files/subj_2020_2021_bachelor45_01.xlsx")
+discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
+processed_data, db = generate_df_w_unique_code(df1, discipline_rep)
+df_to_excel(processed_data, "source_files/new_disciplines_full.xlsx")
+df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
+
+print("Done! Go check the file :)")
+print("--- %s seconds ---" % (time.time() - start_time))
