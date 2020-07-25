@@ -158,7 +158,6 @@ def generate_df_w_unique_code(in_df, sys_df=None):
         in_df.loc[i, "DIS_CODE"] = get_pos_1_2_3(in_df["DEGREE"][i], in_df["SUBFIELDCODE"][i], in_df["COMPONENT"][i], in_df["SUBJECT_CODE"][i], str(i + 2) + " ")
         p4 = get_pos_4(sys_df, sem, in_df["DIS_CODE"][i], in_df["SUBJECT"][i], in_df["SUBFIELDNAME"][i])
         in_df.loc[i, "DIS_CODE"] = in_df["DIS_CODE"][i] + str(p4) + "." + str(in_df.loc[i, "YEAR"])
-        print(in_df.loc[i, "DIS_CODE"])
         sys_df = sys_df.append(in_df.loc[i])
         sys_df.iloc[-1, sys_df.columns.get_loc("SEM_INFO")] = sem
         sys_df = sys_df.drop_duplicates().reset_index(drop=True)
