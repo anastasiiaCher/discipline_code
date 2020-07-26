@@ -1,14 +1,12 @@
 import pandas as pd
+import numpy as np
 import re
 import time
 import sys
 
-start_time = time.time()
-
 degree = {
-    "06": "Бакалавр",
-    "071": "Специали",
-    "072": "Магистр"
+    "06": ["Академический бакалавр", "Специалист"],
+    "07": ["Магистр"]
 }
 uni_module = {
     "0": "универсальный модуль",
@@ -31,7 +29,7 @@ ognp_module = {
     "3": "элективный модуль по группе направлений",
     "4": "межпрофильный модуль факультета",
     "5": "профильный профессиональный модуль",
-    "6": "специализац",
+    # "6": "специализац",
     "7": "факультетский модуль",
     "8": "цифровая культура в профессиональной деятельности",
     "9": "цифровая культура в предметной области мегафакультета",
@@ -41,17 +39,13 @@ ognp_module = {
     "13": "гиа"
 }
 ognp_codes = {
-    "1": ["12.03.04", "14.03.01", "16.03.03", "18.03.02", "19.03.01", "16.04.03", "18.04.02", "19.04.01", "19.04.02",
-          "19.04.03", "20.04.01", "27.04.01"],
-    "2": ["12.03.01", "13.03.02", "15.03.04", "15.03.06", "24.03.02", "27.03.04", "11.04.03", "12.04.01", "13.04.02",
-          "15.04.02", "15.04.04", "15.04.06", "23.04.03", "24.04.01", "24.04.02", "27.04.03"],
-    "3": ["09.03.01", "09.03.04", "10.03.01", "11.03.03", "23.03.03", "44.03.04", "09.04.01", "09.04.04", "10.04.01",
-          "27.04.03", "27.04.04"],
+    "1": ["12.03.04", "14.03.01", "16.03.03", "18.03.02", "19.03.01", "16.04.03", "18.04.02", "19.04.01", "19.04.02", "19.04.03", "20.04.01", "27.04.01"],
+    "2": ["12.03.01", "13.03.02", "15.03.04", "15.03.06", "24.03.02", "27.03.04", "11.04.03", "12.04.01", "13.04.02", "15.04.02", "15.04.04", "15.04.06", "23.04.03", "24.04.01", "24.04.02", "27.04.03"],
+    "3": ["09.03.01", "09.03.04", "10.03.01", "11.03.03", "23.03.03", "44.03.04", "09.04.01", "09.04.04", "10.04.01", "27.04.03", "27.04.04"],
     "4": ["27.03.05", "38.03.05", "27.04.02", "27.04.05", "27.04.08", "38.04.01", "38.04.05"],
     "5": ["01.03.02", "09.03.02", "01.04.02", "02.04.03", "09.04.02"],
     "6": ["09.03.03", "11.03.02", "45.03.04", "07.04.04", "09.04.03", "11.04.02", "27.04.07", "45.04.04"],
-    "7": ["12.03.02", "12.03.03", "12.03.05", "12.05.01", "16.03.01", "12.04.02", "12.04.03", "12.04.04", "12.04.05",
-          "16.04.01"]
+    "7": ["12.03.02", "12.03.03", "12.03.05", "12.05.01", "16.03.01", "12.04.02", "12.04.03", "12.04.04", "12.04.05", "16.04.01"]
 }
 
 
@@ -64,30 +58,21 @@ def clean_text(text):
     return cleaned
 
 
-# calculate first position
-"""
-def get_pos_1(xlsx_degree, line=""):
-    list_of_degrees = [d for d in degree if re.search(degree[d], xlsx_degree, flags=re.IGNORECASE)]
-    if not list_of_degrees: sys.exit("Неизвестный уровень образования в %sзаписи." % line)
-    else: return list_of_degrees[0]
-"""
-
-
 # calculate positions 1-3
 def get_pos_1_2_3(xlsx_degree, xlsx_sf_code, xlsx_comp, xlsx_subj_code, line=""):
-    list_of_degrees = [d for d in degree if re.search(degree[d], xlsx_degree, flags=re.IGNORECASE)]
+    list_of_degrees = [d for d in degree if xlsx_degree in degree[d]]
     if not list_of_degrees: sys.exit("Неизвестный уровень образования в %sзаписи." % line)
     else: p1 = list_of_degrees[0]
     uni = [u for u in uni_module if re.match(uni_module[u], xlsx_comp, flags=re.IGNORECASE)]
     module = ["5" if re.match("модуль [0-9]", xlsx_comp, flags=re.IGNORECASE) else
-              p for p in ognp_module
-              if re.match(ognp_module[p], xlsx_comp, flags=re.IGNORECASE)]
+              "6" if re.search("специализац", xlsx_comp, flags=re.IGNORECASE) else
+              p if re.match(ognp_module[p], xlsx_comp, flags=re.IGNORECASE) else
+              np.nan for p in ognp_module]
+    module = [m for m in module if str(m) != 'nan']
     if not uni and not module: sys.exit("Неизвестный модуль в %sзаписи." % line)
     if uni:
-        p_1 = p1
-        if p1 == "071": p_1 = "06"
-        if uni[0] != "11": return p_1 + "." + "0" + "." + uni[0] + "."
-        elif (p_1 == "06" and xlsx_subj_code <= 9) or (p_1 == "072" and xlsx_subj_code <= 2): return p_1 + "." + "0" + "." + uni[0] + "."
+        if uni[0] != "11": return p1 + "." + "0" + "." + uni[0] + "."
+        elif (p1 == "06" and xlsx_subj_code <= 9) or (p1 == "072" and xlsx_subj_code <= 2): return p1 + "." + "0" + "." + uni[0] + "."
     if module:
         ognp_num = [num for num in ognp_codes if xlsx_sf_code in ognp_codes[num]]
         if not ognp_num: sys.exit("Неизвестный шифр направления подготовки в %sзаписи." % line)
@@ -107,12 +92,12 @@ def get_max_4(dis_rep):
     else: return -1
 
 
-def unit_info(data, sf_name, subj, comp, subj_code):
+def unit_info(data, sf_name, subj, comp, subj_code, cycle):
     credit_units = [0 for i in range(0, 12)]
-    units = data.loc[(data["SUBFIELDNAME"] == sf_name) & (data["SUBJECT"] == subj) & (data["COMPONENT"] == comp) & (data["SUBJECT_CODE"] == subj_code)]
+    units = data.loc[(data["SUBFIELDNAME"] == sf_name) & (data["SUBJECT"] == subj) & (data["COMPONENT"] == comp) & (data["SUBJECT_CODE"] == subj_code) & (data["CYCLE"] == cycle)]
     try:
         for u in units.index.values:
-            if pd.isna(units["CREDITS"][u]): credit_units[int(units["SEMESTER"][u]) - 1] = "-"
+            if pd.isna(units["CREDITS"][u]) or units["CREDITS"][u] == 0: credit_units[int(units["SEMESTER"][u]) - 1] = "-"
             elif units["SEMESTER"][u] == ".": credit_units[11] = int(units["CREDITS"][u])
             else: credit_units[int(units["SEMESTER"][u]) - 1] = int(units["CREDITS"][u])
     except:
@@ -142,8 +127,15 @@ def get_pos_4(rep, sem_xlsx, dis_code, subj, sf_name):
 
 # create sys_df if empty or does not exist
 def create_sys_df():
-    cols = ["SUBFIELDCODE", "MAJOR_NAME", "SUBFIELDNAME", "YEAR", "DEGREE", "SUBJECT_CODE", "SUBJECT", "CREDITS", "CYCLE", "COMPONENT", "SEMESTER", "ISOPTION", "TYPELEARNING", "DIS_CODE", "SEM_INFO"]
+    cols = ["SUBFIELDCODE", "SUBFIELDNAME", "YEAR", "DEGREE", "SUBJECT_CODE", "SUBJECT", "COMPONENT", "SEM_INFO", "DIS_CODE"]
     sys_df = pd.DataFrame(columns=cols)
+    return sys_df
+
+
+def append_sys_df(sys_df, sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code):
+    to_append = [sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code]
+    sys_df.loc[len(sys_df)] = to_append
+    sys_df = sys_df.drop_duplicates().reset_index(drop=True)
     return sys_df
 
 
@@ -154,48 +146,54 @@ def generate_df_w_unique_code(in_df, sys_df=None):
     if (sys_df is None) or sys_df.empty: sys_df = create_sys_df()
     in_df["COMPONENT"] = in_df["COMPONENT"].apply(clean_text)
     for i in in_df.index.values:
-        sem = unit_info(in_df, in_df["SUBFIELDNAME"][i], in_df["SUBJECT"][i], in_df["COMPONENT"][i], in_df["SUBJECT_CODE"][i])
+        sem = unit_info(in_df, in_df["SUBFIELDNAME"][i], in_df["SUBJECT"][i], in_df["COMPONENT"][i], in_df["SUBJECT_CODE"][i], in_df["CYCLE"][i])
         in_df.loc[i, "DIS_CODE"] = get_pos_1_2_3(in_df["DEGREE"][i], in_df["SUBFIELDCODE"][i], in_df["COMPONENT"][i], in_df["SUBJECT_CODE"][i], str(i + 2) + " ")
         p4 = get_pos_4(sys_df, sem, in_df["DIS_CODE"][i], in_df["SUBJECT"][i], in_df["SUBFIELDNAME"][i])
-        in_df.loc[i, "DIS_CODE"] = in_df["DIS_CODE"][i] + str(p4) + "." + str(in_df.loc[i, "YEAR"])
-        sys_df = sys_df.append(in_df.loc[i])
-        sys_df.iloc[-1, sys_df.columns.get_loc("SEM_INFO")] = sem
-        sys_df = sys_df.drop_duplicates().reset_index(drop=True)
+        in_df.loc[i, "DIS_CODE"] = in_df["DIS_CODE"][i] + str(p4) + "." + str(in_df["YEAR"][i])
         code_list.append(in_df["DIS_CODE"][i])
+        sys_df = append_sys_df(sys_df, in_df["SUBFIELDCODE"][i], in_df["SUBFIELDNAME"][i], in_df["YEAR"][i], in_df["DEGREE"][i], in_df["SUBJECT_CODE"][i], in_df["SUBJECT"][i], in_df["COMPONENT"][i], sem, in_df["DIS_CODE"][i])
     out_df["DIS_CODE"] = code_list
     return out_df, sys_df
 
 
 # generate unique code for a discipline that already exists
-def generate_single_unique_code(comp, subj_degree, sf_code, subj_code, subj, sf_name, credit_units, year, sys_df=None):
+def generate_single_unique_code(sf_code, sf_name, year, subj_degree, subj_code, subj, comp, credit_units, sys_df=None):
     if (sys_df is None) or sys_df.empty: sys_df = create_sys_df()
     comp = clean_text(comp)
     dis_code = get_pos_1_2_3(subj_degree, sf_code, comp, subj_code)
     sem = ",".join(map(str, credit_units))
     p4 = get_pos_4(sys_df, sem, dis_code, subj, sf_name)
-    dis_code = dis_code + str(p4) + "." + year
-    to_append = [sf_code, "", sf_name, year, subj_degree, subj_code, subj, "", "", comp, "", "", "", dis_code, sem]
-    new_row = pd.Series(to_append, index=sys_df.columns)
-    sys_df = sys_df.append(new_row, ignore_index=True)
-    sys_df = sys_df.drop_duplicates()
+    dis_code = dis_code + str(p4) + "." + str(year)
+    sys_df = append_sys_df(sys_df, sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem, dis_code)
     return dis_code, sys_df
 
-"""
-df1 = pd.read_excel("source_files/subj_2020_2021_bachelor (2).xlsx")
-discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
-processed_data, db = generate_df_w_unique_code(df1)
-df_to_excel(processed_data, "source_files/new_disciplines_test.xlsx")
 
-discipline_code, db = generate_single_unique_code("Элективный модуль по группе направлений",
-                                                  "академический бакалавр",
-                                                  "19.03.01",
-                                                  "32",
-                                                  "1.2. Аналитическая химия и физико-химические методы анализа",
-                                                  "Биотехнология",
-                                                  [0,0,3,0,0,0,0,0,0,0,0,0],
-                                                  str(2020))
-df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
-print(discipline_code)
-print("Done! Go check the file :)")
-print("--- %s seconds ---" % (time.time() - start_time))
+# Example
+# start_time = time.time()
+
+# generate codes for an excel file
 """
+df1 = pd.read_excel("source_files/subj_2020_2021_bachelor_master.xlsx")
+discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
+#processed_data, db = generate_df_w_unique_code(df1)
+df_to_excel(processed_data, "source_files/new_disciplines_test.xlsx")
+df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
+"""
+
+# generate code for a discipline that already exists
+"""
+discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
+discipline_code, db = generate_single_unique_code("19.03.01",
+                                                  "Биотехнология",
+                                                  2020,
+                                                  "Академический бакалавр",
+                                                  32,
+                                                  "1.2. Аналитическая химия и физико-химические методы анализа",
+                                                  "Элективный модуль по группе направлений",
+                                                  [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                                  discipline_rep)
+print(discipline_code)
+df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
+"""
+
+# print("--- %s seconds ---" % (time.time() - start_time))
