@@ -79,6 +79,7 @@ def get_pos_1_2_3(xlsx_degree, xlsx_sf_code, xlsx_comp, xlsx_subj_code, line="")
         else: return p1 + "." + ognp_num[0] + "." + module[0] + "."
 
 
+# write df to excel file
 def df_to_excel(data_frame, file):
     writer = pd.ExcelWriter(file, engine="xlsxwriter")
     data_frame.to_excel(writer, index=False)
@@ -92,6 +93,7 @@ def get_max_4(dis_rep):
     else: return -1
 
 
+# collect info on semesters and credits    
 def unit_info(data, sf_name, subj, comp, subj_code, cycle):
     credit_units = [0 for i in range(0, 12)]
     units = data.loc[(data["SUBFIELDNAME"] == sf_name) & (data["SUBJECT"] == subj) & (data["COMPONENT"] == comp) & (data["SUBJECT_CODE"] == subj_code) & (data["CYCLE"] == cycle)]
@@ -105,6 +107,7 @@ def unit_info(data, sf_name, subj, comp, subj_code, cycle):
     return ",".join(map(str, credit_units))
 
 
+# calculate position 4
 def get_pos_4(rep, sem_xlsx, dis_code, subj, sf_name):
     if subj not in rep["SUBJECT"].to_list(): return str(get_max_4(rep) + 1)
     else:
@@ -132,6 +135,7 @@ def create_sys_df():
     return sys_df
 
 
+# add new line to sys_df
 def append_sys_df(sys_df, sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code):
     to_append = [sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code]
     sys_df.loc[len(sys_df)] = to_append
@@ -174,15 +178,15 @@ def generate_single_unique_code(sf_code, sf_name, year, subj_degree, subj_code, 
 # generate codes for an excel file
 """
 df1 = pd.read_excel("source_files/subj_2020_2021_bachelor_master.xlsx")
-discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
-#processed_data, db = generate_df_w_unique_code(df1)
+discipline_rep = pd.read_excel("source_files/discipline_bank.xlsx")
+processed_data, db = generate_df_w_unique_code(df1, discipline_rep)
 df_to_excel(processed_data, "source_files/new_disciplines_test.xlsx")
-df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
+df_to_excel(db, "source_files/discipline_bank.xlsx")
 """
 
 # generate code for a discipline that already exists
 """
-discipline_rep = pd.read_excel("source_files/discipline_bank_updated.xlsx")
+discipline_rep = pd.read_excel("source_files/discipline_bank.xlsx")
 discipline_code, db = generate_single_unique_code("19.03.01",
                                                   "Биотехнология",
                                                   2020,
@@ -193,7 +197,7 @@ discipline_code, db = generate_single_unique_code("19.03.01",
                                                   [0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                                   discipline_rep)
 print(discipline_code)
-df_to_excel(db, "source_files/discipline_bank_updated.xlsx")
+df_to_excel(db, "source_files/discipline_bank.xlsx")
 """
 
 # print("--- %s seconds ---" % (time.time() - start_time))
