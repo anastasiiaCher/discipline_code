@@ -145,8 +145,11 @@ def create_sys_df():
 
 def append_sys_df(sys_df, sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code):
     to_append = [sf_code, sf_name, year, subj_degree, subj_code, subj, comp, sem_info, dis_code]
-    sys_df.loc[len(sys_df)] = to_append
-    sys_df = sys_df.drop_duplicates().reset_index(drop=True)
+    new_row = pd.Series(to_append, index=sys_df.columns)
+    #df = df.append(a_series, ignore_index=True)
+
+    #sys_df.loc[len(sys_df)] = to_append
+    sys_df = sys_df.append(new_row, ignore_index=True).drop_duplicates().reset_index(drop=True)
     return sys_df
 
 
@@ -182,14 +185,14 @@ def generate_single_unique_code(sf_code, sf_name, year, subj_degree, subj_code, 
 
 
 # Example
-# start_time = time.time()
+#start_time = time.time()
 
 # generate codes for an excel file
 """
-df1 = pd.read_excel("source_files/subj_2020_2021_bachelor_master.xlsx")
+df1 = pd.read_excel("source_files/01.03.02.xlsx")
 discipline_rep = pd.read_excel("source_files/discipline_bank.xlsx")
-processed_data, db = generate_df_w_unique_code(df1)
-df_to_excel(processed_data, "source_files/new_disciplines_test.xlsx")
+processed_data, db = generate_df_w_unique_code(df1, discipline_rep)
+df_to_excel(processed_data, "source_files/new_disciplines_01.03.02.xlsx")
 df_to_excel(db, "source_files/discipline_bank.xlsx")
 """
 
